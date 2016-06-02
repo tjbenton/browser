@@ -11,7 +11,7 @@
     define(factory);
   } else {
     // Assign to common namespaces or simply the global object (window)
-    this[name] = factory; // eslint-disable-line
+    window[name] = factory; // eslint-disable-line
   }
 })('browser', function () {
   var browser = {};
