@@ -2,7 +2,7 @@
   "name": "browser",
   "version": "0.0.1",
   "description": "A small browser detection library",
-  "main": "browser.js",
+  "main": "dist/browser.js",
   "scripts": {
     "build": "rm -rf dist/*.js; babel src --out-file dist/browser.js",
     "minify": "uglifyjs dist/browser.js --compress --mangle -o dist/browser.min.js",
