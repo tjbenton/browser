@@ -1,35 +1,57 @@
 ;(function(name, factory) { // eslint-disable-line
-  factory = factory()
+  const root = window
+  factory = factory(root, localStorage || {})
   if (typeof module !== 'undefined' && module.exports) { // Node.js Module
     module.exports = factory
   } else if (typeof define === 'function' && define.amd) { // AMD Module
     define(factory)
   } else { // Assign to common namespaces or simply the global object (window)
-    window[name] = factory // eslint-disable-line
+    root[name] = factory // eslint-disable-line
   }
-})('browser', () => {
-  const browser = {}
+})('browser', (root, storage) => {
+  const storage_id = '__browser'
+  let tem = storage[storage_id]
+  const browser = tem ? JSON.parse(tem) : {}
+  tem = undefined
   const nav = navigator
   const truthy = true
   const ua = nav.userAgent
   const match = (regex) => (ua.match(regex) || [ '', '', '' ]).slice(1)
-  let tem
+  const define = (name, value) => Object.defineProperty(browser, name, { value })
+  const semver = (version, modifier) => {
+    version.split('.')
+      .reduce((prev, next) => {
+        prev += `${prev ? '.' : ''}${next}`
+        browser[`${modifier}${prev}`] = truthy
+        return prev
+      }, '')
+  }
 
-  Object.defineProperty(browser, 'addClasses', {
-    value: function addClasses(prefix = '') {
-      const html = document.documentElement
-      Object.keys(this).forEach((key) => {
-        const value = `${prefix}${key}`
-        if (
-          key !== 'osversion' &&
-          key !== 'version' &&
-          html.className.split(' ').indexOf(value) < 0
-        ) {
-          html.className += ` ${value}`
-        }
-      })
-    }
+  define('addClasses', function AddClasses(prefix) {
+    prefix = !!prefix ? ` ${prefix}` : ''
+    const classes = Object.keys(this).filter((key) => key.indexOf('ver') < 0)
+    document.documentElement.className += prefix + classes.join(prefix)
   })
+
+  const timestamp = storage_id + 'timestamp'
+  const log = storage[storage_id + 'log']
+  let browser_expire = storage_id + 'browser_expire'
+  browser_expire = root[browser_expire] || storage[browser_expire] || 1
+  const now = new Date().getTime()
+  const laststamp = storage[timestamp]
+
+  if (
+    laststamp &&
+    now - laststamp < browser_expire * 60 * 60 * 1000
+  ) {
+    log && console.log('browser returned early')
+    define('storage', true)
+    return browser
+  }
+
+  define('storage', false)
+
+  log && console.log('browser logic is running')
 
   let _match = match(/(opera|chrome|crios|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i)
   let name = _match[0]
@@ -65,6 +87,9 @@
   name = name === 'msie' ? 'ie' : name
 
   browser[name] = truthy
+  browser.semver = version
+  semver(version, name)
+  version = ~~version.split('.')[0]
   browser[`${name}${version}`] = truthy
   browser.version = version
 
@@ -97,19 +122,14 @@
   }
 
   if (osversion) {
-    browser.osversion = osversion
-    const devices = [ 'ios', 'android', 'iemobile', 'iem', 'windowsphone' ]
-    devices.forEach((os) => {
-      if (browser[os]) {
-        osversion.split('.')
-          .reduce((prev, next) => {
-            prev += `${prev ? '.' : ''}${next}`
-            browser[`${os}${prev}`] = truthy
-            return prev
-          }, '')
-      }
-    })
+    [ 'ios', 'android', 'iemobile', 'iem', 'windowsphone' ]
+      .forEach((os) => browser[os] && semver(osversion, os))
+    browser.ossemver = osversion
+    browser.osversion = ~~osversion.split('.')[0]
   }
+
+  storage[timestamp] = now
+  storage[storage_id] = JSON.stringify(browser)
 
   return browser
 }); // eslint-disable-line

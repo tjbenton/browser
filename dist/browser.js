@@ -2,7 +2,8 @@
 
 ;(function (name, factory) {
   // eslint-disable-line
-  factory = factory();
+  var root = window;
+  factory = factory(root, localStorage || {});
   if (typeof module !== 'undefined' && module.exports) {
     // Node.js Module
     module.exports = factory;
@@ -11,31 +12,54 @@
     define(factory);
   } else {
     // Assign to common namespaces or simply the global object (window)
-    window[name] = factory; // eslint-disable-line
+    root[name] = factory; // eslint-disable-line
   }
-})('browser', function () {
-  var browser = {};
+})('browser', function (root, storage) {
+  var storage_id = '__browser';
+  var tem = storage[storage_id];
+  var browser = tem ? JSON.parse(tem) : {};
+  tem = undefined;
   var nav = navigator;
   var truthy = true;
   var ua = nav.userAgent;
   var match = function match(regex) {
     return (ua.match(regex) || ['', '', '']).slice(1);
   };
-  var tem = void 0;
+  var define = function define(name, value) {
+    return Object.defineProperty(browser, name, { value: value });
+  };
+  var semver = function semver(version, modifier) {
+    version.split('.').reduce(function (prev, next) {
+      prev += '' + (prev ? '.' : '') + next;
+      browser['' + modifier + prev] = truthy;
+      return prev;
+    }, '');
+  };
 
-  Object.defineProperty(browser, 'addClasses', {
-    value: function addClasses() {
-      var prefix = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
-
-      var html = document.documentElement;
-      Object.keys(this).forEach(function (key) {
-        var value = '' + prefix + key;
-        if (key !== 'osversion' && key !== 'version' && html.className.split(' ').indexOf(value) < 0) {
-          html.className += ' ' + value;
-        }
-      });
-    }
+  define('addClasses', function AddClasses(prefix) {
+    prefix = !!prefix ? ' ' + prefix : '';
+    var classes = Object.keys(this).filter(function (key) {
+      return key.indexOf('ver') < 0;
+    });
+    document.documentElement.className += prefix + classes.join(prefix);
   });
+
+  var timestamp = storage_id + 'timestamp';
+  var log = storage[storage_id + 'log'];
+  var browser_expire = storage_id + 'browser_expire';
+  browser_expire = root[browser_expire] || storage[browser_expire] || 1;
+  var now = new Date().getTime();
+  var laststamp = storage[timestamp];
+
+  if (laststamp && now - laststamp < browser_expire * 60 * 60 * 1000) {
+    log && console.log('browser returned early');
+    define('storage', true);
+    return browser;
+  }
+
+  define('storage', false);
+
+  log && console.log('browser logic is running');
 
   var _match = match(/(opera|chrome|crios|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i);
   var name = _match[0];
@@ -71,6 +95,9 @@
   name = name === 'msie' ? 'ie' : name;
 
   browser[name] = truthy;
+  browser.semver = version;
+  semver(version, name);
+  version = ~ ~version.split('.')[0];
   browser['' + name + version] = truthy;
   browser.version = version;
 
@@ -103,18 +130,15 @@
   }
 
   if (osversion) {
-    browser.osversion = osversion;
-    var devices = ['ios', 'android', 'iemobile', 'iem', 'windowsphone'];
-    devices.forEach(function (os) {
-      if (browser[os]) {
-        osversion.split('.').reduce(function (prev, next) {
-          prev += '' + (prev ? '.' : '') + next;
-          browser['' + os + prev] = truthy;
-          return prev;
-        }, '');
-      }
+    ['ios', 'android', 'iemobile', 'iem', 'windowsphone'].forEach(function (os) {
+      return browser[os] && semver(osversion, os);
     });
+    browser.ossemver = osversion;
+    browser.osversion = ~ ~osversion.split('.')[0];
   }
+
+  storage[timestamp] = now;
+  storage[storage_id] = JSON.stringify(browser);
 
   return browser;
 }); // eslint-disable-line

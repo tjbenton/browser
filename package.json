@@ -1,10 +1,11 @@
 {
   "name": "browser",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A small browser detection library",
   "main": "dist/browser.js",
   "scripts": {
-    "build": "rm -rf dist/*.js; babel src --out-file dist/browser.js",
+    "build": "npm run compile; npm run minify",
+    "compile": "rm -rf dist/*.js; babel src --out-file dist/browser.js",
     "minify": "uglifyjs dist/browser.js --compress --mangle -o dist/browser.min.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
