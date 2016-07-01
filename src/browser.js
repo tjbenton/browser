@@ -42,12 +42,15 @@
 
   if (
     laststamp &&
-    now - laststamp < browser_expire * 60 * 60 * 1000
+    now - laststamp < browser_expire * 60 * 60 * 1000 &&
+    storage.ua === ua
   ) {
     log && console.log('browser returned early')
     define('storage', true)
     return browser
   }
+
+  storage.ua = ua
 
   define('storage', false)
 
