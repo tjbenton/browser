@@ -28,7 +28,7 @@
   }
 
   define('addClasses', function AddClasses(prefix) {
-    prefix = !!prefix ? ` ${prefix}` : ''
+    prefix = !!prefix ? ` ${prefix}` : ' '
     const classes = Object.keys(this).filter((key) => key.indexOf('ver') < 0)
     document.documentElement.className += prefix + classes.join(prefix)
   })

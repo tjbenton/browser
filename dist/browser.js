@@ -37,7 +37,7 @@
   };
 
   define('addClasses', function AddClasses(prefix) {
-    prefix = !!prefix ? ' ' + prefix : '';
+    prefix = !!prefix ? ' ' + prefix : ' ';
     var classes = Object.keys(this).filter(function (key) {
       return key.indexOf('ver') < 0;
     });
