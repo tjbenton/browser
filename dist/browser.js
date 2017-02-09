@@ -3,7 +3,15 @@
 ;(function (name, factory) {
   // eslint-disable-line
   var root = window;
-  factory = factory(root, localStorage || sessionStorage || {});
+  var storage = void 0;
+  try {
+    localStorage.test = 2;
+    localStorage.removeItem(test);
+    storage = localStorage;
+  } catch (e) {
+    storage = {};
+  }
+  factory = factory(root, storage);
   if (typeof module !== 'undefined' && module.exports) {
     // Node.js Module
     module.exports = factory;
