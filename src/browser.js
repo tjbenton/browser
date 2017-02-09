@@ -1,6 +1,14 @@
 ;(function(name, factory) { // eslint-disable-line
   const root = window
-  factory = factory(root, localStorage || sessionStorage || {})
+  let storage
+  try {
+    localStorage.test = 2
+    localStorage.removeItem('test')
+    storage = localStorage
+  } catch (e) {
+    storage = {}
+  }
+  factory = factory(root, storage)
   if (typeof module !== 'undefined' && module.exports) { // Node.js Module
     module.exports = factory
   } else if (typeof define === 'function' && define.amd) { // AMD Module
