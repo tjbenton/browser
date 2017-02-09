@@ -1,6 +1,6 @@
 ;(function(name, factory) { // eslint-disable-line
   const root = window
-  factory = factory(root, localStorage || {})
+  factory = factory(root, localStorage || sessionStorage || {})
   if (typeof module !== 'undefined' && module.exports) { // Node.js Module
     module.exports = factory
   } else if (typeof define === 'function' && define.amd) { // AMD Module
